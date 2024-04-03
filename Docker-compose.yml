@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq 
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: vhost
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - mynetwork
+
+  database-course:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: course
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 4349kxx
+    ports:
+      - "5432:5432"
+    networks:
+      - mynetwork
+
+
+  database-student:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: student
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 4349kxx
+    ports:
+      - "5433:5432"
+    networks:
+      - mynetwork
+
+  course:
+    build: ./course
+    container_name: course
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database-course
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database-course:5432/course
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 4349kxx
+    networks:
+      - mynetwork
+
+  student:
+    build: ./student
+    container_name: student
+    ports:
+      - "8081:8081"
+    depends_on:
+      - database-student
+      - course
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database-student:5432/student
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 4349kxx
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
